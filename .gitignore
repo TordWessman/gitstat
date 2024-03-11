@@ -1,0 +1,8 @@
+crypto_repos
+__pycache__
+cache
+*_orig.py
+main.py
+dumpcode.txt
+notes.txt
+*.png
