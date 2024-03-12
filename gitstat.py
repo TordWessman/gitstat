@@ -95,7 +95,7 @@ class GitStatEntry:
 		return {
 			"timestamp": self.timestamp,
 			"change_count": self.change_count,
-			"change_count": self.commit_count,
+			"commit_count": self.commit_count,
 			"insertions": self.insertions,
 			"deletions": self.deletions
 		}
