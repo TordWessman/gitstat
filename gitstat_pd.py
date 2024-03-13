@@ -5,6 +5,7 @@ import logging
 
 import gitstat
 from common import ensure_path
+from gitstat_models import *
 
 log = logging.getLogger(gitstat.LOGGER_TAG)
 
@@ -46,7 +47,6 @@ class GitStatData:
 	def available_column_names(self) -> List[str]:
 		all_columns = [col for col in self.df.columns if col != "timestamp"]
 
-
 class GitStatPd:
 
 	def __init__(self, config: gitstat.GitStatConfig):
@@ -64,14 +64,23 @@ class GitStatPd:
 		data.df = pd.read_pickle(self._file_name_for(data))
 		return data
 
-	def synchronize(self, source:List[gitstat.RepoMapping], interval:int) -> [GitStatData]:
-		repositories_metas = self.gitstat.fetch_repositories_meta(source)
-		repositories_metas = self.gitstat.download_source_code(repositories_metas)
+	def synchronize(self, source:List[gitstat.RepoMapping], interval:int, load_meta_from_github:bool=True, update_repos=True) -> [GitStatData]:
+		repositories_metas = None
+		if not load_meta_from_github:
+			repositories_metas = self.gitstat.load_metas_from_cache(source)
+		else:
+			repositories_metas = self.gitstat.fetch_repositories_meta(source)
+		if update_repos:
+			repositories_metas = self.gitstat.download_source_code(repositories_metas)
+		
+		repositories_metas = self.gitstat.update_cache(repositories_metas)
+
 		for tag, repo_metas in repositories_metas.items():
+
 			stats_objects =  self.gitstat.generate_stats(interval, repo_metas)
 			stats_dicts = [entry.as_dict for entry in stats_objects]
+			assert(len(stats_dicts))
 			stats = pd.DataFrame(stats_dicts)
-			#stats.to_pickle(self._file_name_for(tag, interval))
 			stats = stats.rename(columns=lambda x: GitStatData.get_column_name(x, tag, interval) if x != "timestamp" else x).sort_values(by="timestamp")
 			data = GitStatData(tag, interval, stats)
 			self._save_frame(data)

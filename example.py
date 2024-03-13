@@ -1,15 +1,14 @@
 import logging
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import List, Dict
 
-from gitstat import *
-from gitstat_pd import GitStatPd, GitStatData
 import gitstat
+from gitstat_pd import GitStatPd, GitStatData
+from gitstat_models import *
 
 logging.basicConfig(level=logging.INFO)
 
-log = logging.getLogger(gitstat.LOGGER_TAG)
+log = logging.getLogger(gitstat.gitparse.GIT_PARSE_LOGGER_ID)
 log.setLevel(logging.DEBUG) 
 
 def display(stats:[GitStatData]):
@@ -24,7 +23,7 @@ def display(stats:[GitStatData]):
 	df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
 
 	plt.figure(figsize=(10, 6))
-	window_size = 30
+	window_size = 3
 	for data in stats:
 		for column_name in data.columns:
 			plt.plot(df['timestamp'], df[column_name].rolling(window=window_size).mean(), label=column_name, alpha=0.7)
@@ -39,22 +38,20 @@ def display(stats:[GitStatData]):
 
 def main():
 
-	here_will_my_repositories_be_stored = "~/crypto_temp/crypto_repos"
-	here_will_results_be_cached = "~/crypto_temp/cache"
-	i_dont_want_to_include_any_commits_older_than_these = int(datetime(2019, 9, 20, 10, tzinfo=pytz.utc).timestamp())
+	here_will_my_repositories_be_stored = "/var/tmp/git_parse_tmp/repos"
+	here_will_results_be_cached = "/var/tmp/git_parse_tmp/cache"
+	i_dont_want_to_include_any_commits_older_than_these = 1570277046 # Saturday, October 5, 2019 12:04:06 PM GMT
 	time_resolution = 24 * 3600
 
-	config = GitStatConfig(here_will_my_repositories_be_stored, i_dont_want_to_include_any_commits_older_than_these, cache_path=here_will_results_be_cached)
+	config = gitstat.GitStatConfig(repository_path=here_will_my_repositories_be_stored, cache_path=here_will_results_be_cached, max_history_time=i_dont_want_to_include_any_commits_older_than_these)
 	gs = GitStatPd(config)
 	
-	repo_mappings = [RepoMapping(org="bit-country", tag="NUUM"), RepoMapping(org="celestiaorg", tag="TIA", max_count=50), RepoMapping(org="aptos-labs", tag="APT"), RepoMapping(org="iotexproject", tag="IOTEX", ignore_repos=["homebrew-core", "arduino-sdk"], max_count=50), RepoMapping(org="InvArch", tag="VARCH")]
+	repo_mappings = [RepoMapping(org="BonkLabs", tag="BONK")]
 	
 	for data in gs.synchronize(repo_mappings, time_resolution):
 		print(data.df.describe())
-	tia = gs.load(GitStatData("TIA", time_resolution))
-	varch = gs.load(GitStatData("VARCH", time_resolution))
-	display([varch, tia])
-	
+	bonk = gs.load(GitStatData("BONK", time_resolution))
+	display([bonk])
 
 if __name__ == '__main__':
 	main()

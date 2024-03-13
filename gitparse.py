@@ -17,7 +17,6 @@ class UnexpectedLineError(Exception):
 	def __init__(self, line):
 		super(UnexpectedLineError, self).__init__('ERROR: Unexpected Line: ' + line)
 
-
 class Author(object):
 
 	def __init__(self, name:str="", email:str=""):
@@ -39,18 +38,21 @@ class Author(object):
 class CommitData(object):
 
 	def __init__(self, commit_hash:str=None, author:Author=Author(), message:str=None,
-				 date:int=None, is_merge:bool=False, change_id:str=None, files_changed:int=0, insertions:int=0, deletions:int=0):
-		self.commit_hash = commit_hash
-		self.author = author
-		self.message = message
-		self.date = date
-		self.is_merge = is_merge
-		self.ignore = False
-		# change id
-		self.change_id = change_id
-		self.files_changed = files_changed
-		self.insertions = insertions
-		self.deletions = deletions
+				 date:int=None, is_merge:bool=False, change_id:str=None, files_changed:int=0, insertions:int=0, deletions:int=0, db_row=None):
+		if db_row:
+			_, _, _, self.date, self.insertions, self.deletions, self.commit_hash = db_row
+			self.author = Author()	
+		else:
+			self.commit_hash = commit_hash
+			self.author = author
+			self.message = message
+			self.date = date
+			self.is_merge = is_merge
+			self.ignore = False
+			self.change_id = change_id
+			self.files_changed = files_changed
+			self.insertions = insertions
+			self.deletions = deletions
 
 	def __str__(self):
 		return f"{self.commit_hash}, {self.author}, {self.message}, {self.date}, {self.is_merge}, {self.change_id}, {self.files_changed}, {self.insertions}, {self.deletions}"
